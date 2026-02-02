@@ -627,9 +627,11 @@ failed:
 #if SIO_TLS
     client_impl::context_ptr client_impl::on_tls_init(connection_hdl conn)
     {
-        context_ptr ctx = context_ptr(new  asio::ssl::context(asio::ssl::context::tls));
+        context_ptr ctx = context_ptr(new  asio::ssl::context(asio::ssl::context::tlsv12_client));
         asio::error_code ec;
         ctx->set_options(asio::ssl::context::default_workarounds |
+                         asio::ssl::context::no_sslv2 |
+                         asio::ssl::context::no_sslv3 |
                          asio::ssl::context::no_tlsv1 |
                          asio::ssl::context::no_tlsv1_1 |
                          asio::ssl::context::single_dh_use,ec);
@@ -637,7 +639,14 @@ failed:
         {
             cerr<<"Init tls failed,reason:"<< ec.message()<<endl;
         }
-        
+
+        // Disable certificate verification (for now - server uses valid cert)
+        ctx->set_verify_mode(asio::ssl::verify_none, ec);
+        if(ec)
+        {
+            cerr<<"Set verify mode failed,reason:"<< ec.message()<<endl;
+        }
+
         return ctx;
     }
 #endif
