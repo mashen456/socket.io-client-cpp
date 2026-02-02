@@ -254,9 +254,19 @@ namespace sio
                 ss<<uo.get_host();
             }
 
-            // If a resource path was included in the URI, use that, otherwise
-            // use the default /socket.io/.
-            const std::string path(uo.get_resource() == "/" ? "/socket.io/" : uo.get_resource());
+            // Always append /socket.io/ to the base path
+            // This ensures Socket.IO works behind reverse proxies that strip path prefixes
+            std::string basePath = uo.get_resource();
+            if (basePath.empty() || basePath == "/") {
+                basePath = "/socket.io/";
+            } else {
+                // Append /socket.io/ to the existing path
+                if (basePath.back() != '/') {
+                    basePath += "/";
+                }
+                basePath += "socket.io/";
+            }
+            const std::string path = basePath;
 
             ss<<":"<<uo.get_port()<<path<<"?EIO=4&transport=websocket";
             if(m_sid.size()>0){
